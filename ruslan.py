@@ -1,11 +1,12 @@
-#Tokens
+# Tokens
 INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF = (
-    'INTEGER','PLUS','MINUS','MUL','DIV','(',')','EOF'
+    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', '(', ')', 'EOF'
 )
 
-#token class
+
+# token class
 class Token(object):
-    def __init__(self,type,value):
+    def __init__(self, type, value):
         self.type = type
         self.value = value
 
@@ -19,25 +20,25 @@ class Token(object):
         """
 
         return str(f'Token({self.type}, {self.value})')
-    
+
     def __repr__(self):
         return self.__str__()
 
 
-#lexer class
+# lexer class
 
 class Lexer(object):
-    def __init__(self,text):
+    def __init__(self, text):
         self.text = text
-        self.pointer = 0 #or self.pos
-        self.current_char = self.text[0] #or self.pos
-    
+        self.pointer = 0  # or self.pos
+        self.current_char = self.text[0]  # or self.pos
+
     def error(self):
         raise Exception('Invalid character')
-    
+
     def is_end_input(self):
-        return False if self.pointer < len(self.text) else True
-       
+        return self.pointer >= len(self.text)
+
     def advance(self):
         '''Advance the pointer and set the current_char '''
         self.pointer += 1
@@ -49,7 +50,7 @@ class Lexer(object):
     def lex_whitespace(self):
         while not self.is_end_input() and self.current_char.isspace():
             self.advance()
-    
+
     def lex_integer(self):
         ''' Return a (multidigit) integer consumed from the input
         as long as the input did not end and is a digit
@@ -59,24 +60,24 @@ class Lexer(object):
             result += self.current_char
             self.advance()
         return result
-    
+
     def tokenize(self):
         """ Lexical analyzer main method. Breaks a sentence into tokens, one at a time."""
 
-        while not self.is_end_input(): 
-            #detect the beginning of each token 
-            #then call other methods if the token is of variable size
+        while not self.is_end_input():
+            # detect the beginning of each token
+            # then call other methods if the token is of variable size
             if self.current_char.isspace():
                 self.lex_whitespace()
-                continue #do not need to return a token here
+                continue  # do not need to return a token here
             if self.current_char.isdigit():
-                return Token(INTEGER,self.lex_integer())
+                return Token(INTEGER, self.lex_integer())
             if self.current_char == '+':
                 self.advance()
-                return Token(PLUS,'+')
+                return Token(PLUS, '+')
             if self.current_char == '-':
                 self.advance()
-                return Token(MINUS,'-')
+                return Token(MINUS, '-')
             if self.current_char == '*':
                 self.advance()
                 return Token(MUL, '*')
@@ -92,15 +93,52 @@ class Lexer(object):
             if self.current_char == ')':
                 self.advance()
                 return Token(RPAREN, ')')
-            
+
             self.error()
-        
+
         return Token(EOF, None)
 
+##########################################################
+    # Parser / Interpreter code                              #
+    ##########################################################
+    def eat(self, token_type):
+        # compare the current token type with the passed token
+        # type and if they match then "eat" the current token
+        # and assign the next token to the self.current_token,
+        # otherwise raise an exception.
+        if self.current_token.type == token_type:
+            self.current_token = self.tokenize()
+        else:
+            self.error()
+
+    def term(self):
+        """Return an INTEGER token value."""
+        token = self.current_token # cache the value,
+        # because eat will "tokenize" to the next token
+        self.eat(INTEGER) # i expect an INTEGER In the current token
+        return int(token.value)
+
+    def expr(self):
+        """Arithmetic expression parser / interpreter."""
+        # set current token to the first token taken from the input
+        self.current_token = self.tokenize()
+
+        result = self.term()
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result = result + self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result = result - self.term()
+
+        return result
 
 
 def test_token():
     pass
+
 
 def test_lexer(text="10 + 5"):
     lexer = Lexer(text)
@@ -114,12 +152,10 @@ def test_lexer(text="10 + 5"):
             break
 
     return str(ls)
-        
-    
-    
 
-if __name__== "__main__":
-    text = "10 + 5"
+
+if __name__ == "__main__":
+    text = "10 + 111"
     lexer = Lexer(text)
 
-    test_lexer()
+    print(lexer.expr())
