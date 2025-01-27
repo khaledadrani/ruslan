@@ -5,7 +5,7 @@ from source.tokenization.lexer import Lexer
 
 
 def test_RPN_translator_success():
-    lexer = Lexer("(5 + 3) * 12 / 3")
+    lexer = Lexer("BEGIN  a := (5 + 3) * 12 / 3 END")
 
     parser = Parser(lexer)
 
