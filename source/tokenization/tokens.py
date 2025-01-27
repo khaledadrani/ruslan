@@ -19,6 +19,7 @@ class TokenType(str, Enum):
     END = 'END'
     SEMI = "SEMI"
     DOT = "DOT"
+    WHITESPACE = " "
 
     def __str__(self):
         return self.value
