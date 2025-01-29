@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Any
+from functools import partial
 
 
 class TokenType(str, Enum):
@@ -19,18 +20,20 @@ class TokenType(str, Enum):
     END = 'END'
     SEMI = "SEMI"
     DOT = "DOT"
-    WHITESPACE = " "
+    WHITESPACE = "WHITESPACE"
 
     def __str__(self):
         return self.value
 
 
-class Token(object):
-    def __init__(self, type: TokenType, value: Any):
+class Token:
+    def __init__(self, type: TokenType, value: Any, pos: int):
         # token type: INTEGER, PLUS, MINUS, MUL, DIV, or EOF
         self.type = type
         # token value: non-negative integer value, '+', '-', '*', '/', or None
         self.value = value
+
+        self.pos = pos
 
     def __str__(self):
         """String representation of the class instance.
@@ -53,6 +56,6 @@ class Token(object):
 
 
 RESERVED_KEYWORDS = {
-    'BEGIN': Token(TokenType.BEGIN, TokenType.BEGIN),
-    'END': Token(TokenType.BEGIN, TokenType.END),
+    'BEGIN': lambda pos: Token(TokenType.BEGIN, TokenType.BEGIN, pos),
+    'END': lambda pos: Token(TokenType.BEGIN, TokenType.END, pos),
 }

@@ -1,44 +1,50 @@
-from typing import TYPE_CHECKING, List, Type
+from typing import List, Type
 
-if TYPE_CHECKING:
-    from source.tokenization.lex_handlers import TokenHandler
-
+from source.tokenization.token_handlers.base_token_handler import TokenHandler
+from source.tokenization.token_handlers.common_token_handlers import WhitespaceHandler, ParenthesisHandler, \
+    OperatorHandler, IntegerHandler, IdentifierHandler, NewTokenHandler
 from source.tokenization.tokens import Token, TokenType
 
 
 class Lexer:
-    def __init__(self, text: str, handlers: List[Type["TokenHandler"]]):
+    def __init__(self, text: str, handlers: List[Type[TokenHandler]]):
         self.text = text
         self.pos = 0
 
-        self.handlers = [handler(lexer=self) for handler in handlers]
+        self.handlers = handlers
 
-    @property
-    def current_char(self):
-        return self.text[self.pos]
+    def get_next_token(self, text, pos) -> Token:
+        #while self.pos is not None:
+        if pos is None or pos >= len(text):
+            return Token(TokenType.EOF, None, len(text))
 
-    def peek(self):
-        """
-        return the next token after the current position without
-        incrementing the self.pos cursor
-        """
-        return self.text[self.pos + 1] if self.pos else None
+        for handler in self.handlers:
+            handler_instance = handler(text, pos)
+            token = handler_instance()
+            if token:
+                return token
+        raise TypeError(f"Unknown Token Type  `{text[pos]}`")
 
-    def advance(self):
-        self.pos += 1
-        if self.pos > len(self.text) - 1:
-            self.pos = None
+        #return Token(TokenType.EOF, None, text[pos])
 
-    def get_next_token(self):
-        while self.pos is not None:
-            for handler in self.handlers:
-                token = handler()
-                if token:
-                    return token
-            raise TypeError(f"Unknown Token Type  `{self.current_char}`")
+    def __iter__(self):
+        return self
 
-        return Token(TokenType.EOF, None)
+    def __next__(self):
+        # if self.pos is None or self.pos >= len(self.text):
+        #     raise StopIteration
+
+        token = self.get_next_token(self.text, self.pos)
+        if token.type == TokenType.EOF:
+            raise StopIteration
+
+        self.pos = token.pos
+        return token
 
 
+class PascalLexer(Lexer):
+    def __init__(self, text: str):
+        handlers = [WhitespaceHandler, ParenthesisHandler, OperatorHandler,
+                    IntegerHandler, IdentifierHandler, NewTokenHandler]
 
-
+        super().__init__(text=text, handlers=handlers)
